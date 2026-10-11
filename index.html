@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>ゆる筋ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* layout: 1カラムのスマホ手帳。上に今週の点、下に部位別カード。カードの中に「段」のはしご */
+:root{
+  --bg:#F1F4F0; --surface:#FFFFFF; --ink:#1E2925; --muted:#5D6C66; --line:#D9E2DB;
+  --accent:#2E6D5F; --accent-ink:#FFFFFF; --accent-soft:#DFEDE7;
+  --easy:#3A8A57; --ok:#B7841C; --hard:#BF4F47; --cell0:#E3E9E4;
+  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131917; --surface:#1B2320; --ink:#E4EDE9; --muted:#97A8A1; --line:#2B3732;
+  --accent:#79C1AC; --accent-ink:#0F1A16; --accent-soft:#1F3830;
+  --easy:#6CC489; --ok:#E2B455; --hard:#E7837B; --cell0:#232D29; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131917; --surface:#1B2320; --ink:#E4EDE9; --muted:#97A8A1; --line:#2B3732;
+  --accent:#79C1AC; --accent-ink:#0F1A16; --accent-soft:#1F3830;
+  --easy:#6CC489; --ok:#E2B455; --hard:#E7837B; --cell0:#232D29; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:900;font-size:1.7rem;margin:0;letter-spacing:.02em}
+h2{font-family:var(--display);font-weight:700;font-size:1.1rem;margin:0;text-wrap:balance}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:.85rem}
+.store{font-size:.75rem;color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.tabs button{flex:1;border:0;background:none;border-radius:999px;padding:8px 0;font-family:var(--display);font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.week div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.75rem;color:var(--muted)}
+.dot{width:30px;height:30px;border-radius:50%;background:var(--cell0);display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.dot.on{background:var(--accent)}
+.dot.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.stats{display:flex;gap:20px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.stats b{font-family:var(--display);font-size:1.4rem;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:2px}
+
+.label{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:.9rem}
+a.chip{color:var(--ink);text-decoration:none}
+.moti{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 16px;gap:8px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:700}
+.mood{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mood button{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;line-height:1.3}
+.mood button b{font-family:var(--display);font-size:1rem}
+.mood button span{font-size:.75rem;color:var(--muted)}
+.mood button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.hint{font-size:.85rem;background:var(--accent-soft);border-radius:12px;padding:10px 14px}
+.hint button{border:0;background:none;color:var(--accent);font-weight:700;text-decoration:underline;padding:0}
+
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card.done{border-color:var(--accent)}
+.ctop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ctop > div{min-width:0}
+.tag{font-size:.72rem;color:var(--muted)}
+.target{font-family:var(--display);font-size:1.25rem;font-weight:700;line-height:1.35}
+.target small{font-size:.85rem;color:var(--muted);font-weight:500}
+.ladder{display:flex;gap:3px;align-items:flex-end;height:22px;flex:none}
+.ladder i{width:7px;border-radius:2px;background:var(--cell0)}
+.ladder i.on{background:var(--accent)}
+.tip{font-size:.83rem;color:var(--muted);margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:0;border-radius:12px;padding:9px 16px;font-weight:700;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);font-weight:500}
+.yt{font-size:.85rem;color:var(--accent);font-weight:700;text-decoration:none;margin-left:auto}
+.feel{display:flex;gap:6px}
+.feel button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 12px;font-weight:700}
+.feel .e{color:var(--easy)} .feel .o{color:var(--ok)} .feel .h{color:var(--hard)}
+.donechips{display:flex;gap:6px;flex-wrap:wrap}
+.dchip{font-size:.8rem;border-radius:999px;padding:3px 6px 3px 10px;background:var(--accent-soft);display:inline-flex;align-items:center;gap:4px}
+.dchip button{border:0;background:none;color:var(--muted);padding:0 4px;font-size:.9rem}
+.suggest{border-radius:12px;padding:10px 12px;font-size:.88rem;border:1px dashed var(--accent);display:flex;flex-direction:column;gap:8px}
+.suggest.down{border-color:var(--hard)}
+details{font-size:.85rem}
+summary{cursor:pointer;color:var(--muted)}
+.steps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.steps li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:8px}
+.steps li.cur{background:var(--accent-soft);font-weight:700}
+.steps button{border:0;background:none;color:var(--accent);font-size:.8rem;padding:0}
+
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,14px);grid-auto-columns:14px;gap:3px;overflow-x:auto;padding-bottom:4px}
+.heat i{border-radius:3px;background:var(--cell0)}
+.heat i.l1{background:color-mix(in srgb,var(--accent) 40%,var(--cell0))}
+.heat i.l2{background:color-mix(in srgb,var(--accent) 70%,var(--cell0))}
+.heat i.l3{background:var(--accent)}
+.log{display:flex;flex-direction:column;gap:10px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.day h3{font-family:var(--display);font-size:.95rem;margin:0 0 4px}
+.day ul{margin:0;padding:0;list-style:none;font-size:.88rem}
+.day li{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:4px 0}
+.day li:first-child{border-top:0}
+.kotsu{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--accent-soft);border-radius:14px;padding:10px 14px;font-size:.88rem}
+.kotsu a{background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:700;border-radius:999px;padding:6px 14px;white-space:nowrap}
+.f-easy{color:var(--easy)} .f-ok{color:var(--ok)} .f-hard{color:var(--hard)}
+.empty{color:var(--muted);font-size:.9rem;text-align:center;padding:24px 0}
+section{display:flex;flex-direction:column;gap:10px}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>ゆる筋ノート</h1>
+      <div class="sub">らくに感じたら、一段だけ上げる。</div>
+    </div>
+    <div class="store" id="store">読み込み中…</div>
+  </div>
+
+  <section aria-label="今週">
+    <div class="week" id="week"></div>
+    <div class="stats" id="stats"></div>
+    <div id="kotsu"></div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-today" aria-selected="true" data-tab="today">きょう</button>
+    <button role="tab" id="tab-log" aria-selected="false" data-tab="log">きろく</button>
+  </div>
+
+  <div id="view-today" style="display:flex;flex-direction:column;gap:16px">
+    <section class="moti">
+      <div><b>やる気スイッチ</b> <span class="sub">石本先生の動画をYouTubeで</span></div>
+      <div class="row">
+        <a class="chip" href="https://www.youtube.com/results?search_query=%E7%9F%B3%E6%9C%AC%E5%93%B2%E9%83%8E" target="_blank" rel="noopener">新しい動画 ↗</a>
+        <a class="chip" href="https://www.youtube.com/results?search_query=%E7%9F%B3%E6%9C%AC%E5%93%B2%E9%83%8E+%E7%AD%8B%E3%83%88%E3%83%AC" target="_blank" rel="noopener">筋トレ ↗</a>
+        <a class="chip" href="https://www.youtube.com/results?search_query=%E7%9F%B3%E6%9C%AC%E5%93%B2%E9%83%8E+%E5%AE%85%E3%83%88%E3%83%AC" target="_blank" rel="noopener">宅トレ ↗</a>
+        <a class="chip" href="https://www.youtube.com/results?search_query=%E7%9F%B3%E6%9C%AC%E5%93%B2%E9%83%8E+%E3%83%80%E3%82%A4%E3%82%A8%E3%83%83%E3%83%88" target="_blank" rel="noopener">ダイエット ↗</a>
+      </div>
+    </section>
+    <section>
+      <div class="label">きょうの気分</div>
+      <div class="mood" id="mood"></div>
+    </section>
+    <section>
+      <div class="label">部位</div>
+      <div class="row" id="parts"></div>
+      <div id="nudge"></div>
+    </section>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <div id="view-log" hidden>
+    <section>
+      <h2>この12週間</h2>
+      <div class="heat" id="heat"></div>
+      <div class="sub">色が濃いほど、その日たくさんやった日。</div>
+    </section>
+    <section>
+      <h2>最近のきろく</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const PARTS = {leg:'脚・お尻', chest:'胸・腕', core:'お腹', back:'背中', shoulder:'肩・姿勢'};
+const MOODS = [
+  {id:1, name:'ゆるゆる', note:'1セット'},
+  {id:2, name:'ふつう', note:'2セット'},
+  {id:3, name:'がんばる', note:'3セット'},
+];
+// steps: [名前, 回数/秒数, YouTube検索語]
+const EX = [
+  {id:'squat', part:'leg', name:'スクワット', tip:'ひざがつま先より前に出すぎないように。お尻を後ろに引く感じで。',
+   steps:[['椅子スクワット','8回','椅子スクワット やり方'],['椅子スクワット','12回','椅子スクワット やり方'],['スクワット','10回','スクワット 正しいやり方 初心者'],['スクワット','15回','スクワット 正しいやり方 初心者'],['ゆっくりスクワット(3秒で下ろす)','12回','スロースクワット やり方'],['ワイドスクワット','15回','ワイドスクワット やり方']]},
+  {id:'hip', part:'leg', name:'ヒップリフト', tip:'あおむけでひざを立て、お尻をきゅっと締めて持ち上げる。腰は反らせない。',
+   steps:[['ヒップリフト','10回','ヒップリフト やり方'],['ヒップリフト','15回','ヒップリフト やり方'],['上で3秒キープ','12回','ヒップリフト キープ'],['片脚ヒップリフト','左右6回','片脚ヒップリフト やり方'],['片脚ヒップリフト','左右10回','片脚ヒップリフト やり方']]},
+  {id:'calf', part:'leg', name:'かかと上げ', tip:'壁や椅子に手をそえてOK。歯みがき中にもできる。',
+   steps:[['かかと上げ','15回','カーフレイズ 初心者'],['かかと上げ','25回','カーフレイズ 初心者'],['ゆっくりかかと上げ','20回','カーフレイズ ゆっくり'],['片脚かかと上げ','左右10回','片脚カーフレイズ']]},
+  {id:'push', part:'chest', name:'腕立て伏せ', tip:'体を一直線に。壁→テーブル→ひざつき→ふつう、の順で床に近づけていく。',
+   steps:[['壁腕立て','10回','壁腕立て伏せ やり方'],['壁腕立て','15回','壁腕立て伏せ やり方'],['テーブル腕立て(斜め)','10回','インクラインプッシュアップ 自宅'],['ひざつき腕立て','8回','膝つき腕立て伏せ やり方'],['ひざつき腕立て','12回','膝つき腕立て伏せ やり方'],['腕立て伏せ','5回','腕立て伏せ 正しいフォーム 初心者'],['腕立て伏せ','10回','腕立て伏せ 正しいフォーム 初心者']]},
+  {id:'dip', part:'chest', name:'二の腕(椅子ディップス)', tip:'安定した椅子のふちに手をつき、ひじを後ろに曲げて体を下ろす。',
+   steps:[['ひざ曲げディップス(浅め)','8回','チェアディップス 初心者'],['ひざ曲げディップス','12回','チェアディップス 初心者'],['脚をのばしてディップス','10回','チェアディップス やり方'],['脚をのばしてディップス','15回','チェアディップス やり方']]},
+  {id:'plank', part:'core', name:'プランク', tip:'お尻が上がりすぎず下がりすぎず。息は止めない。',
+   steps:[['ひざつきプランク','15秒','膝つきプランク やり方'],['ひざつきプランク','30秒','膝つきプランク やり方'],['プランク','20秒','プランク 正しいやり方'],['プランク','30秒','プランク 正しいやり方'],['プランク','45秒','プランク 正しいやり方'],['プランク','60秒','プランク 正しいやり方']]},
+  {id:'crunch', part:'core', name:'クランチ', tip:'頭を上げるのではなく、おへそをのぞきこむように背中を丸める。',
+   steps:[['クランチ(手は太もも)','10回','クランチ 初心者 やり方'],['クランチ','15回','クランチ 初心者 やり方'],['クランチ','20回','クランチ やり方'],['ゆっくりクランチ','15回','スロークランチ'],['足上げクランチ','15回','レッグレイズクランチ']]},
+  {id:'super', part:'back', name:'背中そらし(スーパーマン)', tip:'うつぶせで、首はのばしたまま。反りすぎないことが大事。',
+   steps:[['腕だけ上げる','10回','バックエクステンション 初心者 自宅'],['手と足を上げる','10回','スーパーマン 筋トレ やり方'],['手と足を上げる','15回','スーパーマン 筋トレ やり方'],['上で3秒キープ','10回','スーパーマン キープ']]},
+  {id:'towel', part:'back', name:'タオルラットプル', tip:'タオルをぴんと張って頭の上から胸の前へ引き下ろす。肩甲骨を寄せる。',
+   steps:[['タオルラットプル','10回','タオルラットプルダウン'],['タオルラットプル','15回','タオルラットプルダウン'],['タオルラットプル','20回','タオルラットプルダウン'],['ゆっくりタオルラットプル','15回','タオル 背中 トレーニング']]},
+  {id:'scap', part:'shoulder', name:'肩甲骨まわし', tip:'指先を肩にのせて、ひじで大きな円を描く。前回し・後ろ回し両方。',
+   steps:[['肩甲骨まわし','前後10回','肩甲骨回し やり方'],['肩甲骨まわし','前後15回','肩甲骨回し やり方'],['肩甲骨まわし','前後20回','肩甲骨回し やり方']]},
+  {id:'ylift', part:'shoulder', name:'Y字レイズ', tip:'うつぶせで腕をYの字にのばし、親指を上に向けて少し持ち上げる。猫背対策に。',
+   steps:[['Y字レイズ','8回','Yレイズ うつ伏せ'],['Y字レイズ','12回','Yレイズ うつ伏せ'],['Y字レイズ 上で2秒','12回','Yレイズ うつ伏せ'],['Y・T・W 連続','各8回','YTW トレーニング']]},
+];
+const FEEL = {easy:'らく', ok:'ちょうど', hard:'きつい'};
+
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const TODAY = () => ymd(new Date());
+const WD = ['日','月','火','水','木','金','土'];
+const KOTSU_URL = 'https://moca33333.github.io/yumekotsu/?kintore=1';
+const ytUrl = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+
+let state = {steps:{}, snooze:{}, days:{}};
+let ui = {tab:'today', mood:2, part:'all', pending:null};
+try { const u = JSON.parse(localStorage.getItem('yurukin-ui')||'{}'); if(u.mood) ui.mood=u.mood; if(u.part) ui.part=u.part; } catch(e){}
+const saveUi = () => { try{ localStorage.setItem('yurukin-ui', JSON.stringify({mood:ui.mood, part:ui.part})); }catch(e){} };
+
+/* ---------- 保存先：db（全端末で同期）→ なければこの端末のlocalStorage ---------- */
+let col = null, mode = 'loading', chain = Promise.resolve();
+const LKEY = 'yurukin-data-v1';
+function loadLocal(){ try{ const s = JSON.parse(localStorage.getItem(LKEY)||'null'); if(s) state = Object.assign({steps:{},snooze:{},days:{}}, s); }catch(e){} }
+function queue(fn){ chain = chain.then(fn).catch(e => { console.warn(e); setStore('保存に失敗しました。通信を確認してもう一度。'); }); return chain; }
+function saveDay(date){
+  if(mode==='db'){ const body = {date, entries: (state.days[date]||{entries:[]}).entries}; return queue(() => body.entries.length ? col.doc('d-'+date).set(body) : col.doc('d-'+date).delete()); }
+  try{ localStorage.setItem(LKEY, JSON.stringify(state)); }catch(e){}
+}
+function saveState(){
+  if(mode==='db'){ const body = {steps:{...state.steps}, snooze:{...state.snooze}}; return queue(() => col.doc('state').set(body)); }
+  try{ localStorage.setItem(LKEY, JSON.stringify(state)); }catch(e){}
+}
+function setStore(t){ document.getElementById('store').textContent = t; }
+
+async function boot(){
+  render();
+  let db = null, user = null;
+  try{
+    if(window.claude && window.claude.use){ [db, user] = await Promise.all([claude.use('db'), claude.use('user')]); }
+  }catch(e){}
+  let uid = null;
+  try{ uid = user ? await user.id() : null; }catch(e){}
+  if(db && uid){
+    mode = 'db'; col = db.collection('data/users/'+uid);
+    setStore('スマホとPCで同期中');
+    col.onSnapshot(snap => {
+      const next = {steps:{}, snooze:{}, days:{}};
+      snap.docs.forEach(d => {
+        const v = d.data(); if(!v) return;
+        if(d.id==='state'){ next.steps = {...(v.steps||{})}; next.snooze = {...(v.snooze||{})}; }
+        else if(d.id.startsWith('d-')){ next.days[v.date] = {entries: (v.entries||[]).map(x=>({...x}))}; }
+      });
+      state = next; render();
+    }, err => { setStore('同期が切れました。ページを開き直してください。'); });
+  } else {
+    mode = 'local'; loadLocal();
+    setStore('この端末だけに保存中'); render();
+  }
+}
+
+/* ---------- 計算 ---------- */
+function allEntries(){
+  const out = [];
+  Object.keys(state.days).forEach(date => (state.days[date].entries||[]).forEach(e => out.push({...e, date})));
+  return out.sort((a,b) => (b.t||0)-(a.t||0));
+}
+function curStep(ex){ return Math.min(state.steps[ex.id]||0, ex.steps.length-1); }
+function suggestion(ex){
+  const cur = curStep(ex);
+  const hist = allEntries().filter(e => e.ex===ex.id && e.step===cur);
+  const snoozeAt = state.snooze[ex.id+':'+cur];
+  if(snoozeAt != null && hist.length < snoozeAt + 2) return null;
+  const f = hist.map(e => e.feel);
+  if(f.length>=2 && f[0]==='hard' && f[1]==='hard' && cur>0) return 'down';
+  if(f.length>=2 && f[0]==='easy' && f[1]==='easy') return 'up';
+  if(f.length>=3 && f.slice(0,3).every(x => x!=='hard')) return 'up';
+  return null;
+}
+function activeDays(){ return Object.keys(state.days).filter(d => (state.days[d].entries||[]).length); }
+function streak(){
+  const set = new Set(activeDays()); let n = 0; const d = new Date();
+  if(!set.has(ymd(d))) d.setDate(d.getDate()-1);
+  while(set.has(ymd(d))){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function lastByPart(){
+  const last = {}; Object.keys(PARTS).forEach(p => last[p] = null);
+  allEntries().forEach(e => { const ex = EX.find(x=>x.id===e.ex); if(ex && (!last[ex.part] || e.date > last[ex.part])) last[ex.part] = e.date; });
+  return last;
+}
+
+/* ---------- 操作 ---------- */
+function record(exId, feel){
+  const ex = EX.find(x => x.id===exId); const date = TODAY();
+  if(!state.days[date]) state.days[date] = {entries:[]};
+  state.days[date].entries.push({ex:exId, step:curStep(ex), sets:ui.mood, feel, t:Date.now()});
+  ui.pending = null; render(); saveDay(date);
+}
+function removeEntry(t){
+  const date = TODAY(); const d = state.days[date]; if(!d) return;
+  d.entries = d.entries.filter(e => e.t !== t); render(); saveDay(date);
+}
+function setStep(exId, idx){ state.steps[exId] = idx; render(); saveState(); }
+function snooze(exId){
+  const ex = EX.find(x=>x.id===exId); const cur = curStep(ex);
+  state.snooze[exId+':'+cur] = allEntries().filter(e => e.ex===exId && e.step===cur).length;
+  render(); saveState();
+}
+
+/* ---------- 描画 ---------- */
+function render(){
+  renderWeek(); renderMood(); renderParts(); renderCards(); renderLog();
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab===ui.tab));
+  document.getElementById('view-today').hidden = ui.tab!=='today';
+  document.getElementById('view-log').hidden = ui.tab!=='log';
+}
+function renderWeek(){
+  const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay()+6)%7));
+  let html = '', weekCount = 0;
+  for(let i=0;i<7;i++){
+    const d = new Date(mon); d.setDate(mon.getDate()+i); const k = ymd(d);
+    const n = state.days[k] ? state.days[k].entries.length : 0; if(n) weekCount++;
+    html += `<div><span>${WD[d.getDay()]}</span><span class="dot${n?' on':''}${k===TODAY()?' today':''}">${n||''}</span></div>`;
+  }
+  document.getElementById('week').innerHTML = html;
+  const todayN = state.days[TODAY()] ? state.days[TODAY()].entries.length : 0;
+  document.getElementById('stats').innerHTML =
+    `<span><b>${todayN}</b>種目 きょう</span><span><b>${weekCount}</b>日 今週</span><span><b>${streak()}</b>日 連続</span>`;
+  document.getElementById('kotsu').innerHTML = todayN
+    ? `<div class="kotsu"><span>きょうの筋トレ、夢こつ手帳にもつけよう</span><a href="${KOTSU_URL}" target="_blank" rel="noopener">💪をつける ↗</a></div>`
+    : '';
+}
+function renderMood(){
+  document.getElementById('mood').innerHTML = MOODS.map(m =>
+    `<button aria-pressed="${ui.mood===m.id}" data-mood="${m.id}"><b>${m.name}</b><span>${m.note}</span></button>`).join('');
+}
+function renderParts(){
+  const opts = [['all','ぜんぶ'], ...Object.entries(PARTS)];
+  document.getElementById('parts').innerHTML = opts.map(([k,v]) =>
+    `<button class="chip" aria-pressed="${ui.part===k}" data-part="${k}">${v}</button>`).join('');
+  const last = lastByPart(); const ents = allEntries();
+  let nudge = '';
+  if(ents.length){
+    const oldest = Object.keys(last).sort((a,b) => (last[a]||'') < (last[b]||'') ? -1 : 1)[0];
+    if(oldest && last[oldest] !== TODAY()){
+      nudge = `<div class="hint">しばらくやっていない部位：<b>${PARTS[oldest]}</b>${last[oldest] ? '（前回 '+fmtDate(last[oldest])+'）' : '（まだ記録なし）'} <button data-part="${oldest}">これにする</button></div>`;
+    }
+  }
+  document.getElementById('nudge').innerHTML = nudge;
+}
+function renderCards(){
+  const list = EX.filter(e => ui.part==='all' || e.part===ui.part);
+  const todays = (state.days[TODAY()]||{entries:[]}).entries;
+  document.getElementById('cards').innerHTML = list.map(ex => {
+    const cur = curStep(ex); const [sn, amt, q] = ex.steps[cur];
+    const done = todays.filter(e => e.ex===ex.id);
+    const sug = suggestion(ex);
+    const ladder = ex.steps.map((_,i) => `<i class="${i<=cur?'on':''}" style="height:${8+i*14/(ex.steps.length-1||1)}px"></i>`).join('');
+    let sugHtml = '';
+    if(sug==='up'){
+      sugHtml = cur < ex.steps.length-1
+        ? `<div class="suggest"><div>最近「らく」が続いています。次の段 <b>${ex.steps[cur+1][0]} ${ex.steps[cur+1][1]}</b> を試してみる？</div><div class="actions"><button class="btn" data-up="${ex.id}">一段上げる</button><button class="btn ghost" data-snooze="${ex.id}">まだいい</button></div></div>`
+        : `<div class="suggest"><div>いちばん上の段まで来ました。次は気分を「がんばる」にしてセット数を増やすのがおすすめ。</div><div class="actions"><button class="btn ghost" data-snooze="${ex.id}">わかった</button></div></div>`;
+    } else if(sug==='down'){
+      sugHtml = `<div class="suggest down"><div>「きつい」が続いています。一段戻して <b>${ex.steps[cur-1][0]} ${ex.steps[cur-1][1]}</b> にしても大丈夫。</div><div class="actions"><button class="btn ghost" data-down="${ex.id}">一段戻す</button><button class="btn ghost" data-snooze="${ex.id}">このまま</button></div></div>`;
+    }
+    const act = ui.pending===ex.id
+      ? `<span class="sub">どうだった？</span><div class="feel"><button class="e" data-feel="easy" data-ex="${ex.id}">らく</button><button class="o" data-feel="ok" data-ex="${ex.id}">ちょうど</button><button class="h" data-feel="hard" data-ex="${ex.id}">きつい</button></div>`
+      : `<button class="btn${done.length?' ghost':''}" data-did="${ex.id}">${done.length?'もう1回やった':'できた'}</button>`;
+    return `<article class="card${done.length?' done':''}">
+      <div class="ctop"><div>
+        <div class="tag">${PARTS[ex.part]} ・ ${ex.name}</div>
+        <div class="target">${sn} ${amt} <small>× ${ui.mood}セット</small></div>
+      </div><div class="ladder" title="${cur+1}段目 / ${ex.steps.length}段" aria-label="${cur+1}段目 / ${ex.steps.length}段">${ladder}</div></div>
+      <p class="tip">${ex.tip}</p>
+      ${done.length?`<div class="donechips">${done.map(e => `<span class="dchip">✓ ${ex.steps[e.step][1]}×${e.sets} <span class="f-${e.feel}">${FEEL[e.feel]}</span><button aria-label="取り消す" data-rm="${e.t}">×</button></span>`).join('')}</div>`:''}
+      ${sugHtml}
+      <div class="actions">${act}<a class="yt" href="${ytUrl(q)}" target="_blank" rel="noopener">動画で見る ↗</a></div>
+      <details><summary>段のはしご（${cur+1}/${ex.steps.length}）</summary><ol class="steps">${ex.steps.map((s,i) =>
+        `<li class="${i===cur?'cur':''}"><span>${i+1}. ${s[0]} ${s[1]}</span>${i===cur?'<span>いまここ</span>':`<button data-set="${ex.id}:${i}">ここにする</button>`}</li>`).join('')}</ol></details>
+    </article>`;
+  }).join('');
+}
+function fmtDate(k){ const [y,m,d] = k.split('-').map(Number); const dt = new Date(y,m-1,d); return `${m}/${d}(${WD[dt.getDay()]})`; }
+function renderLog(){
+  const end = new Date(); const start = new Date(end); start.setDate(end.getDate() - ((end.getDay()+6)%7) - 7*11);
+  let heat = ''; const d = new Date(start);
+  while(d <= end){
+    const k = ymd(d); const n = state.days[k] ? state.days[k].entries.length : 0;
+    heat += `<i class="${n>=5?'l3':n>=3?'l2':n>=1?'l1':''}" title="${fmtDate(k)} ${n}種目"></i>`;
+    d.setDate(d.getDate()+1);
+  }
+  document.getElementById('heat').innerHTML = heat;
+  const days = activeDays().sort().reverse().slice(0, 30);
+  document.getElementById('log').innerHTML = days.length ? days.map(k => `<div class="day"><h3>${fmtDate(k)}</h3><ul>${
+    state.days[k].entries.map(e => { const ex = EX.find(x=>x.id===e.ex); if(!ex) return ''; const s = ex.steps[Math.min(e.step, ex.steps.length-1)];
+      return `<li><span>${s[0]} ${s[1]} × ${e.sets}</span><span class="f-${e.feel}">${FEEL[e.feel]}</span></li>`; }).join('')
+  }</ul></div>`).join('') : '<div class="empty">まだきろくがありません。「きょう」タブで1種目やって「できた」を押すと、ここに残ります。</div>';
+}
+
+/* ---------- イベント ---------- */
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if(!b) return;
+  const ds = b.dataset;
+  if(ds.tab){ ui.tab = ds.tab; render(); }
+  else if(ds.mood){ ui.mood = +ds.mood; saveUi(); render(); }
+  else if(ds.part){ ui.part = ds.part; saveUi(); render(); }
+  else if(ds.did){ ui.pending = ds.did; render(); }
+  else if(ds.feel){ record(ds.ex, ds.feel); }
+  else if(ds.rm){ removeEntry(+ds.rm); }
+  else if(ds.up){ setStep(ds.up, curStep(EX.find(x=>x.id===ds.up))+1); }
+  else if(ds.down){ setStep(ds.down, curStep(EX.find(x=>x.id===ds.down))-1); }
+  else if(ds.snooze){ snooze(ds.snooze); }
+  else if(ds.set){ const [id,i] = ds.set.split(':'); setStep(id, +i); }
+});
+boot();
+</script>
+
+</body>
+</html>
